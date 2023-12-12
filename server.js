@@ -4,6 +4,8 @@ const app = express();
 
 const http = require("http").createServer(app);
 
+const nodemailer = require("nodemailer");
+
 const expressFormidable = require("express-formidable");
 
 app.use(expressFormidable());
@@ -33,7 +35,7 @@ http.listen(port, () => {
     res.send("Logged in");
   });
 
-  app.post("/login", (req, res) => {
+  app.post("/login", async (req, res) => {
     const email = req.fields.email;
     const hash = Math.floor(100000 + Math.random() * 900000);
 
@@ -59,9 +61,32 @@ http.listen(port, () => {
     res.render("verification", {
       email,
     });
+
+    await sendEmailVerification(hash, email);
   });
 
   app.get("/", (req, res) => {
     res.render("index");
   });
 });
+
+async function sendEmailVerification(hash, to) {
+  const fromEmail = process.env.MAILER_FROM_EMAIL;
+  const name = process.env.MAILER_FROM_NAME;
+  const transport = nodemailer.createTransport({
+    host: "smtp.flostage.com",
+    port: 465,
+    secure: true,
+    auth: { user: fromEmail, pass: process.env.MAILER_FROM_PASS },
+  });
+
+  const emailObject = await transport.sendMail({
+    from: `${name} <${fromEmail}>`,
+    to,
+    subject: "Verification",
+    text: `Your verification code is ${hash}`,
+    html: `Your verification code is <b>${hash}</b>`,
+  });
+
+  console.log(emailObject);
+}
