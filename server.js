@@ -6,6 +6,9 @@ const http = require("http").createServer(app);
 
 const nodemailer = require("nodemailer");
 
+const jwt = require("jsonwebtoken");
+const fs = require("fs");
+
 const expressFormidable = require("express-formidable");
 
 app.use(expressFormidable());
@@ -18,6 +21,12 @@ const users = [];
 
 http.listen(port, () => {
   console.log(`Server started at ${port}`);
+
+  app.post("/protected", verifyToken, (req, res, next) => {
+    res.status(200).json({
+      user: req.userData,
+    });
+  });
 
   app.post("/verify", (req, res) => {
     const email = req.fields.email;
@@ -32,7 +41,9 @@ http.listen(port, () => {
       return;
     }
 
-    res.send("Logged in");
+    res.json({
+      refreshToken: generateToken(email),
+    });
   });
 
   app.post("/login", async (req, res) => {
@@ -89,4 +100,29 @@ async function sendEmailVerification(hash, to) {
   });
 
   console.log(emailObject);
+}
+
+function generateToken(email) {
+  const privateKey = fs.readFileSync("jwt_private.key"); //Generate key pair https://github.com/vochinguyen/nodejs_crypto_basic_231206
+  const token = jwt.sign({ email }, privateKey, {
+    algorithm: "RS256",
+    expiresIn: "5m",
+  });
+
+  return token;
+}
+
+function verifyToken(req, res, next) {
+  try {
+    const bearerToken = req.headers.authorization;
+    const token = bearerToken.split(" ")[1];
+    const publicKey = fs.readFileSync("jwt_public.key"); //Generate key pair https://github.com/vochinguyen/nodejs_crypto_basic_231206
+    const decoded = jwt.verify(token, publicKey);
+    req.userData = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      message: "Auth failed",
+    });
+  }
 }
