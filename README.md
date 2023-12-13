@@ -7,15 +7,15 @@
 - jsonwebtoken https://www.npmjs.com/package/jsonwebtoken:
 
    + Adding User Login & JWT Signing | Creating a REST API with Node.js https://www.youtube.com/watch?v=0D5EEKH97NA&list=PL55RiY5tL51q4D-B63KBnygU6opNPFk_q&index=12
-    ```
-        const privateKey = fs.readFileSync("jwt_private.key");
+    ```javascript
+        const privateKey = fs.readFileSync("jwt_private.key");//Generate key pair https://github.com/vochinguyen/nodejs_crypto_basic_231206
         const token = jwt.sign({ email }, privateKey, {
-        algorithm: "RS256",
-        expiresIn: "5m",
+            algorithm: "RS256",
+            expiresIn: "5m",
         });
     ```
    + JWT Route Protection | Creating a REST API with Node.js https://www.youtube.com/watch?v=8Ip0pcwbWYM&list=PL55RiY5tL51q4D-B63KBnygU6opNPFk_q&index=13
-    ```
+    ```javascript
         function verifyToken(req, res, next) {
             try {
                 const bearerToken = req.headers.authorization;
@@ -26,7 +26,7 @@
                 next();
             } catch (error) {
                 return res.status(401).json({
-                message: "Auth failed",
+                    message: "Auth failed",
                 });
             }
         }
